@@ -20,56 +20,56 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define MAX_BODIES 100
+#define MAX_BODIES 100 // define maximum number of bodies
 
 int main(void)
 {
-	InitWindow(1280, 720, "Physics Engine");
-	SetTargetFPS(60); // VR targets 100FPS
+	InitWindow(1280, 720, "Physics Engine"); // initialize window
+	SetTargetFPS(60); // set target frames per second (FPS)
 
-	Body* bodies = (Body*)malloc(sizeof(Body) * MAX_BODIES); //malloc - allocates bytes
-	assert(bodies); //assert(bodies != NULL)
+	Body* bodies = (Body*)malloc(sizeof(Body) * MAX_BODIES); // allocate memory for bodies array
+	assert(bodies); // assert that memory allocation was successful
 
-	int bodyCount = 0;
+	int bodyCount = 0; // initialize body count
 
 	// 'game loop'
-	while (!WindowShouldClose())
+	while (!WindowShouldClose()) // continue loop until window is closed
 	{
 		// update
-		float dt = GetFrameTime(); // NO CLASSES 
-		float fps = (float)GetFPS();
+		float dt = GetFrameTime(); // get frame time
+		float fps = (float)GetFPS(); // get frames per second
 
-		Vector2 position = GetMousePosition();
-		if (IsMouseButtonDown(0))
+		Vector2 position = GetMousePosition(); // get mouse position
+		if (IsMouseButtonDown(0)) // if left mouse button is down
 		{
-			bodies[bodyCount].position = position;
-			bodies[bodyCount].velocity = CreateVector2(GetRandomFloatValue(-5, 5), GetRandomFloatValue(-5, 5));
-			bodyCount++;
+			bodies[bodyCount].position = position; // set body position to mouse position
+			bodies[bodyCount].velocity = CreateVector2(GetRandomFloatValue(-5, 5), GetRandomFloatValue(-5, 5)); // set random velocity
+			bodyCount++; // increment body count
 		}
 
 		// render / draw
-		BeginDrawing();
-		ClearBackground(BLACK);
+		BeginDrawing(); // begin drawing
+		ClearBackground(BLACK); // clear the background
 
-		//stats
-		DrawText(TextFormat("FPS: %.2f (%.2f ms)", fps, 1000 / fps), 10, 10, 20, LIME);
-		DrawText(TextFormat("FRAME: %.4f", dt), 10, 30, 20, LIME);
+		// draw stats
+		DrawText(TextFormat("FPS: %.2f (%.2f ms)", fps, 1000 / fps), 10, 10, 20, LIME); // draw FPS
+		DrawText(TextFormat("FRAME: %.4f", dt), 10, 30, 20, LIME); // draw frame time
 
-		DrawCircle((int)position.x, (int)position.y, 20, RED);
+		DrawCircle((int)position.x, (int)position.y, 20, RED); // draw mouse cursor
 
 		// update bodies
-		for (int i = 0; i < bodyCount; i++)
+		for (int i = 0; i < bodyCount; i++) // loop through each body
 		{
-			bodies[i].position = Vector2Add(bodies[i].position, bodies[i].velocity);
+			bodies[i].position = Vector2Add(bodies[i].position, bodies[i].velocity); // update body position
 
-			DrawCircle((int)bodies[i].position.x, (int)bodies[i].position.y, 20, YELLOW);
+			DrawCircle((int)bodies[i].position.x, (int)bodies[i].position.y, 20, YELLOW); // draw body
 		}
 
-		EndDrawing();
+		EndDrawing(); // end drawing
 	}
 
-	CloseWindow();
-	free(bodies); // have to free (delete) bodies
+	CloseWindow(); // close the window
+	free(bodies); // free memory allocated for bodies
 
-	return 0;
+	return 0; // return from main function
 }
