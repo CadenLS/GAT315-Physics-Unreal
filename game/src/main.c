@@ -19,18 +19,15 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include "World.h"
 
 #define MAX_BODIES 100 // define maximum number of bodies
+
 
 int main(void)
 {
 	InitWindow(1280, 720, "Physics Engine"); // initialize window
 	SetTargetFPS(60); // set target frames per second (FPS)
-
-	Body* bodies = (Body*)malloc(sizeof(Body) * MAX_BODIES); // allocate memory for bodies array
-	assert(bodies); // assert that memory allocation was successful
-
-	int bodyCount = 0; // initialize body count
 
 	// 'game loop'
 	while (!WindowShouldClose()) // continue loop until window is closed
@@ -42,9 +39,9 @@ int main(void)
 		Vector2 position = GetMousePosition(); // get mouse position
 		if (IsMouseButtonDown(0)) // if left mouse button is down
 		{
-			bodies[bodyCount].position = position; // set body position to mouse position
-			bodies[bodyCount].velocity = CreateVector2(GetRandomFloatValue(-5, 5), GetRandomFloatValue(-5, 5)); // set random velocity
-			bodyCount++; // increment body count
+			Body* body = CreateBody();
+			body->position = GetMousePosition();
+			body->velocity = CreateVector2(GetRandomFloatValue(-5, 5), GetRandomFloatValue(-5, 5));
 		}
 
 		// render / draw
@@ -57,19 +54,22 @@ int main(void)
 
 		DrawCircle((int)position.x, (int)position.y, 20, RED); // draw mouse cursor
 
-		// update bodies
-		for (int i = 0; i < bodyCount; i++) // loop through each body
+		// update / draw bodies
+		Body* body = bodies;
+		while (body) // do while we have a valid pointer, will be NULL at the end of the list
 		{
-			bodies[i].position = Vector2Add(bodies[i].position, bodies[i].velocity); // update body position
+			// update body position
+			body->position = Vector2Add(body->position, body->velocity);
+			// draw body
+			DrawCircle((int)body->position.x, body->position.y, 10, RED);
 
-			DrawCircle((int)bodies[i].position.x, (int)bodies[i].position.y, 20, YELLOW); // draw body
+			body = body->next; // get next body
 		}
 
 		EndDrawing(); // end drawing
 	}
 
 	CloseWindow(); // close the window
-	free(bodies); // free memory allocated for bodies
 
 	return 0; // return from main function
 }
