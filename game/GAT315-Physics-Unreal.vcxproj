@@ -265,8 +265,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\body.c" />
     <ClCompile Include="src\main.c" />
-    <ClCompile Include="src\World.c" />
+    <ClCompile Include="src\world.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\raylib-master\raylib.vcxproj">
@@ -274,9 +275,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Body.h" />
+    <ClInclude Include="integrator.h" />
+    <ClInclude Include="src\body.h" />
     <ClInclude Include="src\Mathf.h" />
-    <ClInclude Include="src\World.h" />
+    <ClInclude Include="src\world.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

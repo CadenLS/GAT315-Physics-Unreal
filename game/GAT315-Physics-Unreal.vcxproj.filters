@@ -12,18 +12,24 @@
     <ClCompile Include="src\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\World.c">
+    <ClCompile Include="src\world.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\body.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Body.h">
+    <ClInclude Include="src\body.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Mathf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\World.h">
+    <ClInclude Include="src\world.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="integrator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

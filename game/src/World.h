@@ -1,8 +1,13 @@
 #pragma once
-#include "Body.h"
+//#include "body.h"
+#include "raylib.h"
 
-extern Body* bodies; // extern - prevents it from being defined outside of here
-extern int bodyCount;
+typedef struct ncBody ncBody; // forward declearation
 
-Body* CreateBody();
-void DestroyBody(Body* body);
+extern ncBody* ncBbodies; // extern - prevents it from being defined outside of here
+extern int ncBodyCount;
+extern Vector2 ncGravity;
+
+ncBody* CreateBody();
+void DestroyBody(ncBody* body);
+void DestroyAllBodies();

@@ -1,14 +1,62 @@
 #pragma once
 #include "raylib.h"
+#include "raymath.h"
 
-
-typedef struct Body
+typedef enum 
 {
-	// force -> acceleration -> velocity -> position
+	BT_STATIC,
+	BT_KINEMATIC,
+	BT_DYNAMIC
+} ncBodyType;
+
+typedef enum
+{
+	FM_FORCE,
+	FM_IMPULSE,
+	FM_VELOCITY
+} ncForceMode;
+
+typedef struct ncBody
+{
+	ncBodyType type;
+	// acceleration -> velocity -> position
 	Vector2 position;
 	Vector2 velocity;
+	Vector2 acceleration;
 	Vector2 force;
 
-	struct Body* next;
-	struct Body* prev;
-} Body;
+	float mass;
+	float inverseMass; // 1 / mass (static = 0)
+	float gravityScale;
+	float damping;
+	Color color;
+
+	struct ncBody* next;
+	struct ncBody* prev;
+} ncBody;
+
+inline void ApplyForce(ncBody* body, Vector2 force, ncForceMode forceMode)
+{
+	if (body->type != BT_DYNAMIC) return;
+
+	switch (forceMode)
+	{
+	case FM_FORCE:
+		body->force = Vector2Add(body->force, force);
+		break;
+	case FM_IMPULSE:
+		// applies a sudden change in momentum(velocity)
+		body->velocity = Vector2Scale(force, body->inverseMass);
+		break;
+	case FM_VELOCITY:
+		body->velocity = force;
+		break;
+	}
+}
+
+inline void ClearForce(ncBody* body)
+{
+	body->force = Vector2Zero();
+}
+
+void Step(ncBody* body, float timestep);
