@@ -4,6 +4,13 @@
 
 void Step(ncBody* body, float timestep)
 {
+	// Update the trail array
+	for (int i = TRAIL_LENGTH - 1; i > 0; i--) 
+	{ 
+		body->trail[i] = body->trail[i - 1]; 
+	}
+	body->trail[0] = body->position; 
+
 	body->force = Vector2Add(body->force, Vector2Scale(Vector2Scale(ncGravity, body->gravityScale), body->mass));
 	body->acceleration = Vector2Scale(body->force, body->inverseMass);
 

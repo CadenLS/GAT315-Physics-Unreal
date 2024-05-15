@@ -2,11 +2,13 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#define TRAIL_LENGTH 50 // Define the length of the trail
+
 typedef enum 
 {
-	BT_STATIC,
+	BT_DYNAMIC,
 	BT_KINEMATIC,
-	BT_DYNAMIC
+	BT_STATIC
 } ncBodyType;
 
 typedef enum
@@ -29,7 +31,12 @@ typedef struct ncBody
 	float inverseMass; // 1 / mass (static = 0)
 	float gravityScale;
 	float damping;
+
+	float restitution;
+
 	Color color;
+
+	Vector2 trail[TRAIL_LENGTH]; // Trail array to store previous positions
 
 	struct ncBody* next;
 	struct ncBody* prev;

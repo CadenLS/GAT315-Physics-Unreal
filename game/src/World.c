@@ -10,7 +10,7 @@ ncBody* ncBbodies = NULL;
 int ncBodyCount = 0;
 Vector2 ncGravity;
 
-ncBody* CreateBody()
+ncBody* CreateBody(Vector2 position, float mass, ncBodyType bodyType)
 {
 	//Allocate memory for new Body
 	ncBody* body = (ncBody*)malloc(sizeof(ncBody));
@@ -18,21 +18,31 @@ ncBody* CreateBody()
 	assert(body);
 
 	memset(body, 0, sizeof(ncBody));
+	body->position = position;
+	body->mass = mass;
+	body->inverseMass = (bodyType == BT_DYNAMIC) ? 1 / body->mass : 0;
+	body->type = bodyType;
 
-	//Initialize 'prev' to NULL and 'next' to the head of the list
-	body->prev = NULL;
-	body->next = ncBbodies;
-	//If list is not empty, update 'prev' of existing head
-	if (ncBbodies)
-	{
-		ncBbodies->prev = body;
-	}
-	//Update head of the list to new Body
-	ncBbodies = body;
-	//Increment body count
-	ncBodyCount++;
 	//Return new Body
 	return body;
+}
+
+void AddBody(ncBody* body)
+{
+	assert(body);
+
+	//Initialize 'prev' to NULL and 'next' to the head of the list
+	body->prev = NULL; 
+	body->next = ncBbodies; 
+	//If list is not empty, update 'prev' of existing head
+	if (ncBbodies) 
+	{
+		ncBbodies->prev = body; 
+	}
+	//Update head of the list to new Body
+	ncBbodies = body; 
+	//Increment body count
+	ncBodyCount++; 
 }
 
 void DestroyBody(ncBody* body)
