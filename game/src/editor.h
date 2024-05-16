@@ -15,6 +15,7 @@ typedef struct ncEditorData
 	float DampingValue;
 	float GravityScaleValue;
 	float StiffnessValue;
+	float RestitutionValue;
 } ncEditorData_t;
 
 typedef enum

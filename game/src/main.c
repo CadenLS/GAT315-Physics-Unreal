@@ -104,7 +104,7 @@ int main(void)
 				DrawCircleLines((int)screen.x, (int)screen.y, ConvertWorldToPixel(selectedBody->mass * 0.5f) + 5, YELLOW);
 			}
 
-			if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) // if left mouse button is down
+			if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_LEFT) && IsKeyDown(KEY_W)) // if left mouse button is down
 			{
 				lastClick = GetMousePosition();
 				clicked = true;
@@ -130,6 +130,7 @@ int main(void)
 					ncBody* body = CreateBody(ConvertScreenToWorld(position), ncEditorData.MassMinValue, ncEditorData.BodyTypeActive);
 					body->damping = ncEditorData.DampingValue;       // how slow it will stop/fall, higher = slower 
 					body->gravityScale = ncEditorData.GravityScaleValue;   // faster it falls
+					body->restitution = ncEditorData.RestitutionValue;
 					body->color = bodyColor; // Use the same color for all particles
 
 					AddBody(body);
@@ -185,6 +186,8 @@ int main(void)
 		// collision
 		ncContact_t* contacts = NULL;
 		CreateContacts(ncBbodies, &contacts);
+		SeparateContacts(contacts); 
+		ResolveContacts(contacts); 
 
 		// render / draw
 		BeginDrawing(); // begin drawing 

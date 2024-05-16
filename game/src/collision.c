@@ -61,10 +61,47 @@ ncContact_t* GenerateContact(ncBody* body1, ncBody* body2)
 
 void SeparateContacts(ncContact_t* contacts)
 {
+	// Iterate through each contact in the list
+	for (ncContact_t* contact = contacts; contact; contact = contact->next)
+	{
+		// Calculate the total inverse mass of the two bodies involved in the contact
+		float totalInverseMass = contact->body1->inverseMass + contact->body2->inverseMass;
 
+		// Calculate the separation vector based on the contact normal and depth
+		Vector2 separation = Vector2Scale(contact->normal, contact->depth / totalInverseMass);
+
+		// Move body1 away from body2 based on their inverse masses
+		contact->body1->position = Vector2Add(contact->body1->position, Vector2Scale(separation, contact->body1->inverseMass));
+
+		// Move body2 away from body1 based on their inverse masses
+		contact->body2->position = Vector2Add(contact->body2->position, Vector2Scale(separation, -contact->body2->inverseMass));
+	}
 }
+
 
 void ResolveContacts(ncContact_t* contacts)
 {
+	// Loop through all contacts
+	for (ncContact_t* contact = contacts; contact; contact = contact->next)
+	{
+		// Relative velocity between the two bodies
+		Vector2 rv = Vector2Subtract(contact->body1->velocity, contact->body2->velocity);
+		// Calculate the relative velocity in the direction of the contact normal
+		float nv = Vector2DotProduct(rv, contact->normal);
 
+		// Check if objects are moving apart
+		if (nv > 0) continue; // If they are, skip this contact
+
+		// Calculate the total inverse mass of both bodies
+		float totalInverseMass = contact->body1->inverseMass + contact->body2->inverseMass;
+		// Calculate the impulse magnitude to apply
+		float impulseMagnitude = -(1 + contact->restitution) * nv / totalInverseMass;
+		// Calculate the impulse vector
+		Vector2 impulse = Vector2Scale(contact->normal, impulseMagnitude);
+
+		// Apply the impulse to the first body
+		ApplyForce(contact->body1, impulse, FM_IMPULSE);
+		// Apply the negated impulse to the second body
+		ApplyForce(contact->body2, Vector2Negate(impulse), FM_IMPULSE);
+	}
 }
