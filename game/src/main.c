@@ -65,10 +65,14 @@ int main(void)
 {
 	ncBody* selectedBody = NULL;
 	ncBody* connectBody = NULL;
+	ncContact_t* contacts = NULL;
+
+	float fixedTimestep = 1.0f / 50;
+	float timeAccumulator = 0; 
 
 	InitWindow(1920, 1080, "Physics Engine"); // initialize window
 	InitEditor();
-	SetTargetFPS(120); // set target frames per second (FPS)
+	SetTargetFPS(60); // set target frames per second (FPS)
 
 	// initialize world
 	ncGravity = (Vector2){ 0, -1 };
@@ -89,6 +93,7 @@ int main(void)
 		float dt = GetFrameTime(); // get frame time
 		float fps = (float)GetFPS(); // get frames per second
 		ncGravity = (Vector2){ 0, -ncEditorData.GravityValue };
+		bodyColor = ncEditorData.BodyColor;
 
 		Vector2 position = GetMousePosition(); // get mouse position
 		ncScreenZoom -= GetMouseWheelMove() * 0.2f;
@@ -109,12 +114,11 @@ int main(void)
 				lastClick = GetMousePosition();
 				clicked = true;
 
-				bodyColor = (Color){ GetRandomValue(50, 255), GetRandomValue(50, 255), GetRandomValue(50, 255), 255 };
 				// Add a glow where clicked
 				for (int i = 0; i < MAX_GLOWS; i++) { 
 					if (glowTimers[i] <= 0) { 
 						glows[i].position = position; 
-						glows[i].color = bodyColor; 
+						glows[i].color = ncEditorData.BodyColor;
 						glows[i].radius = ncEditorData.MassMinValue * 30; 
 						glows[i].alpha = 1.0f; 
 						glowTimers[i] = 3.0f; // Set glow timer 
@@ -150,44 +154,50 @@ int main(void)
 			}
 		}
 
-		// Update glow timers
-		for (int i = 0; i < MAX_GLOWS; i++) { 
-			if (glowTimers[i] > 0)  
-				glowTimers[i] -= dt; 
-		}
+		timeAccumulator += dt;
 
-		// apply force
-		ApplyGravitation(ncBbodies, ncEditorData.GravitationValue);
-		ApplySpringForce(ncSprings);
-
-		// Update particles 
-		for (ncBody* body = ncBbodies; body; body = body->next)
+		while (timeAccumulator >= fixedTimestep)
 		{
-			Step(body, dt); 
+			timeAccumulator -= fixedTimestep;
 
-			//// Apply trail fade rate
-			body->color = Fade(body->color, TRAIL_FADE_RATE * 255); 
-
-			//// Shrink particle size
-			//body->mass -= body->mass * TRAIL_FADE_RATE; 
-
-			// Update the trail array
-			for (int i = TRAIL_LENGTH - 1; i > 0; i--)
-			{
-				body->trail[i] = body->trail[i - 1];
+			// Update glow timers
+			for (int i = 0; i < MAX_GLOWS; i++) {
+				if (glowTimers[i] > 0)
+					glowTimers[i] -= dt;
 			}
-			body->trail[0] = body->position;
 
-			// Draw particle
-			Vector2 screen = ConvertWorldToScreen(body->position);
-			DrawCircle(screen.x, screen.y, ConvertWorldToPixel(body->mass * 0.5f), body->color);
+			// apply force
+			ApplyGravitation(ncBbodies, ncEditorData.GravitationValue);
+			ApplySpringForce(ncSprings);
+
+			// Update particles 
+			for (ncBody* body = ncBbodies; body; body = body->next)
+			{
+				Step(body, dt);
+
+				//// Apply trail fade rate
+				body->color = Fade(body->color, TRAIL_FADE_RATE * 255);
+
+				//// Shrink particle size
+				//body->mass -= body->mass * TRAIL_FADE_RATE; 
+
+				// Update the trail array
+				for (int i = TRAIL_LENGTH - 1; i > 0; i--)
+				{
+					body->trail[i] = body->trail[i - 1];
+				}
+				body->trail[0] = body->position;
+
+				// Draw particle
+				Vector2 screen = ConvertWorldToScreen(body->position);
+				DrawCircle(screen.x, screen.y, ConvertWorldToPixel(body->mass * 0.5f), body->color);
+			}
+
+			// collision
+			CreateContacts(ncBbodies, &contacts);
+			SeparateContacts(contacts);
+			ResolveContacts(contacts);
 		}
-
-		// collision
-		ncContact_t* contacts = NULL;
-		CreateContacts(ncBbodies, &contacts);
-		SeparateContacts(contacts); 
-		ResolveContacts(contacts); 
 
 		// render / draw
 		BeginDrawing(); // begin drawing 

@@ -16,6 +16,8 @@ typedef struct ncEditorData
 	float GravityScaleValue;
 	float StiffnessValue;
 	float RestitutionValue;
+	Color BodyColor;
+	int ColorTypeActive;
 } ncEditorData_t;
 
 typedef enum
