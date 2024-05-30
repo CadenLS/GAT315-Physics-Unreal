@@ -32,8 +32,9 @@
 // Define trail length and fade rate
 #define TRAIL_LENGTH 50 
 #define TRAIL_FADE_RATE 0.02 
-#define MAX_PARTICLES 1
+#define MAX_PARTICLES 10
 #define MAX_GLOWS 10
+#define PARTICLE_LIFETIME 2.0f 
 
 typedef struct {
 	Vector2 position;
@@ -67,24 +68,19 @@ int main(void)
 	ncBody* connectBody = NULL;
 	ncContact_t* contacts = NULL;
 
-	float fixedTimestep = 1.0f / 50;
+	float fixedTimestep = 1.0f / ncEditorData.FixedTimeStep;
 	float timeAccumulator = 0; 
 
-	InitWindow(1920, 1080, "Physics Engine"); // initialize window
+	InitWindow(1920, 1080, "Caden Sinclair - Physics Engine"); // initialize window
 	InitEditor();
 	SetTargetFPS(60); // set target frames per second (FPS)
 
 	// initialize world
 	ncGravity = (Vector2){ 0, -1 };
 
-	Vector2 lastClick; 
-	bool clicked = false; 
-
-	Color bodyColor = BLANK; // Initialize with a blank color
-
 	// Arrays for glows and glow timers
 	Glow glows[MAX_GLOWS] = { 0 }; 
-	float glowTimers[MAX_GLOWS] = { 0 }; 
+	float glowTimers[MAX_GLOWS] = { 0 };
 
 	// 'game loop'
 	while (!WindowShouldClose()) // continue loop until window is closed
@@ -93,12 +89,20 @@ int main(void)
 		float dt = GetFrameTime(); // get frame time
 		float fps = (float)GetFPS(); // get frames per second
 		ncGravity = (Vector2){ 0, -ncEditorData.GravityValue };
-		bodyColor = ncEditorData.BodyColor;
+		bodyC = ncEditorData.BodyColor;
 
 		Vector2 position = GetMousePosition(); // get mouse position
 		ncScreenZoom -= GetMouseWheelMove() * 0.2f;
 		ncScreenZoom = Clamp(ncScreenZoom, 0.1f, 10);
 		UpdateEditor(position);
+
+
+		if (ncEditorData.Reset) 
+		{
+			DestroyAllBodies(); 
+			DestroyAllSprings();
+			ncEditorData.Reset = false;
+		}
 
 		if (!ncEditorIntersect)
 		{
@@ -111,31 +115,27 @@ int main(void)
 
 			if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_LEFT) && IsKeyDown(KEY_W)) // if left mouse button is down
 			{
-				lastClick = GetMousePosition();
-				clicked = true;
-
 				// Add a glow where clicked
-				for (int i = 0; i < MAX_GLOWS; i++) { 
+				for (int i = 0; i < MAX_GLOWS; i++) {
 					if (glowTimers[i] <= 0) { 
 						glows[i].position = position; 
 						glows[i].color = ncEditorData.BodyColor;
 						glows[i].radius = ncEditorData.MassMinValue * 30; 
 						glows[i].alpha = 1.0f; 
 						glowTimers[i] = 3.0f; // Set glow timer 
+
 						break;
 					}
 				}
 
-				float angle = GetRandomFloatValue(0, 360);
-
 				// Randomly generate firework
-				for (int i = 0; i < MAX_PARTICLES; i++)
+				for (int i = 0; i < 1; i++)
 				{
 					ncBody* body = CreateBody(ConvertScreenToWorld(position), ncEditorData.MassMinValue, ncEditorData.BodyTypeActive);
 					body->damping = ncEditorData.DampingValue;       // how slow it will stop/fall, higher = slower 
 					body->gravityScale = ncEditorData.GravityScaleValue;   // faster it falls
 					body->restitution = ncEditorData.RestitutionValue;
-					body->color = bodyColor; // Use the same color for all particles
+					body->color = bodyC; // Use the same color for all particles
 
 					AddBody(body);
 				}
@@ -145,20 +145,37 @@ int main(void)
 		// connec spring
 		if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && selectedBody) connectBody = selectedBody;
 		if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) && connectBody) DrawLineBodyToPosition(connectBody, position);
-		if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) && connectBody)
+		if(connectBody)
 		{
-			if (selectedBody && selectedBody != connectBody)
+			Vector2 world = ConvertScreenToWorld(position); 
+			if (connectBody->type == BT_STATIC || connectBody->type == BT_KINEMATIC)
 			{
-				ncSpring_t* spring = CreateSpring(connectBody, selectedBody, Vector2Distance(connectBody->position, selectedBody->position), ncEditorData.StiffnessValue);
-				AddSpring(spring);
+				connectBody->position = world;
 			}
+			else
+			{
+				ApplySpringForcePosition(world, connectBody, 0, ncEditorData.StiffnessValue, 5); 
+			}
+		}
+		if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) && connectBody) 
+		{
+			if (selectedBody && selectedBody != connectBody) 
+			{
+				ncSpring_t* spring = CreateSpring(connectBody, selectedBody, Vector2Distance(connectBody->position, selectedBody->position), ncEditorData.StiffnessValue); 
+				AddSpring(spring); 
+			}
+		}
+		if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT))
+		{
+			selectedBody = NULL; 
+			connectBody = NULL; 
 		}
 
 		timeAccumulator += dt;
 
-		while (timeAccumulator >= fixedTimestep)
+		while (timeAccumulator >= ncEditorData.FixedTimeStep)
 		{
-			timeAccumulator -= fixedTimestep;
+			timeAccumulator -= ncEditorData.FixedTimeStep;
 
 			// Update glow timers
 			for (int i = 0; i < MAX_GLOWS; i++) {
@@ -166,37 +183,48 @@ int main(void)
 					glowTimers[i] -= dt;
 			}
 
-			// apply force
-			ApplyGravitation(ncBbodies, ncEditorData.GravitationValue);
-			ApplySpringForce(ncSprings);
-
-			// Update particles 
-			for (ncBody* body = ncBbodies; body; body = body->next)
+			if (!ncEditorData.SimulationNotActive)
 			{
-				Step(body, dt);
+				// apply force
+				ApplyGravitation(ncBbodies, ncEditorData.GravitationValue);
+				ApplySpringForce(ncSprings);
 
-				//// Apply trail fade rate
-				body->color = Fade(body->color, TRAIL_FADE_RATE * 255);
-
-				//// Shrink particle size
-				//body->mass -= body->mass * TRAIL_FADE_RATE; 
-
-				// Update the trail array
-				for (int i = TRAIL_LENGTH - 1; i > 0; i--)
+				// Update particles 
+				for (ncBody* body = ncBbodies; body; body = body->next)
 				{
-					body->trail[i] = body->trail[i - 1];
+					Step(body, timeAccumulator);
+
+					//// Apply trail fade rate
+					body->color = Fade(body->color, TRAIL_FADE_RATE * 255);
+
+					//// Shrink particle size
+					if (ncEditorData.MassShrink)
+					{
+						body->mass -= body->mass * TRAIL_FADE_RATE; 
+					}
+
+					// Update the trail array
+					for (int i = TRAIL_LENGTH - 1; i > 0; i--)
+					{
+						body->trail[i] = body->trail[i - 1];
+					}
+					body->trail[0] = body->position;
+
+					// Draw particle
+					Vector2 screen = ConvertWorldToScreen(body->position);
+					DrawCircle(screen.x, screen.y, ConvertWorldToPixel(body->mass * 0.5f), body->color);
 				}
-				body->trail[0] = body->position;
 
-				// Draw particle
-				Vector2 screen = ConvertWorldToScreen(body->position);
-				DrawCircle(screen.x, screen.y, ConvertWorldToPixel(body->mass * 0.5f), body->color);
+				// collision
+				DestroyAllContacts(&contacts); 
+				CreateContacts(ncBbodies, &contacts);
+				SeparateContacts(contacts);
+				ResolveContacts(contacts);
 			}
-
-			// collision
-			CreateContacts(ncBbodies, &contacts);
-			SeparateContacts(contacts);
-			ResolveContacts(contacts);
+			else
+			{
+				continue;
+			}
 		}
 
 		// render / draw
@@ -229,19 +257,19 @@ int main(void)
 
 		// draw stats
 		DrawText(TextFormat("FPS: %.2f (%.2f ms)", fps, 1000 / fps), 10, 10, 20, LIME); // draw FPS
-		DrawText(TextFormat("FRAME: %.4f", dt), 10, 30, 20, LIME); // draw frame time
+		DrawText(TextFormat("FRAME: %.4f", ncEditorData.FixedTimeStep), 10, 30, 20, LIME); // draw frame time
 
 		//DrawCircle((int)position.x, (int)position.y, 5, YELLOW); // draw mouse cursor
 
 		// draw bodies
 		// Draw glowing bodies
-		//BeginBlendMode(BLEND_ADDITIVE); 
+		BeginBlendMode(BLEND_ADDITIVE);  
 		for (ncBody* body = ncBbodies; body; body = body->next)  
 		{
 			Vector2 screen = ConvertWorldToScreen(body->position);
 			DrawCircle((int)screen.x, (int)screen.y, ConvertWorldToPixel(body->mass * 0.5f), body->color);
 		}
-		//EndBlendMode();  // End blending
+		EndBlendMode();  // End blending
 
 		// Draw Contacts
 		for (ncContact_t* contact = contacts; contact; contact = contact->next)

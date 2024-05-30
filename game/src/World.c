@@ -9,6 +9,7 @@
 ncBody* ncBbodies = NULL;
 int ncBodyCount = 0;
 Vector2 ncGravity;
+Color bodyC;
 
 ncBody* CreateBody(Vector2 position, float mass, ncBodyType bodyType)
 {
@@ -72,4 +73,15 @@ void DestroyBody(ncBody* body)
 
 void DestroyAllBodies()
 {
+	if (!ncBbodies) return;
+
+	ncBody* body = ncBbodies;
+	while (body)
+	{
+		ncBody* next = body->next;
+		free(body);
+		body = next;
+	}
+
+	ncBbodies = NULL;
 }

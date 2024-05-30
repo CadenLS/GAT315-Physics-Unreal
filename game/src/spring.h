@@ -1,4 +1,6 @@
 #pragma once
+#include "raylib.h"
+#include <stdlib.h>
 
 typedef struct ncSpring
 {
@@ -19,3 +21,4 @@ void DestroySpring(ncSpring_t* body);
 void DestroyAllSprings();
 
 void ApplySpringForce(ncSpring_t* springs); // pass it to the head
+void ApplySpringForcePosition(Vector2 position, struct ncBody* body, float restLength, float k, float damping);

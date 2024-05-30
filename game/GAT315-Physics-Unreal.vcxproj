@@ -270,6 +270,7 @@
     <ClCompile Include="src\contact.c" />
     <ClCompile Include="src\editor.c" />
     <ClCompile Include="src\force.c" />
+    <ClCompile Include="src\integrator.h" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\render.c" />
     <ClCompile Include="src\spring.c" />
@@ -281,7 +282,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="integrator.h" />
     <ClInclude Include="src\body.h" />
     <ClInclude Include="src\collision.h" />
     <ClInclude Include="src\contact.h" />

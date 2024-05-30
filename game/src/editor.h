@@ -18,6 +18,10 @@ typedef struct ncEditorData
 	float RestitutionValue;
 	Color BodyColor;
 	int ColorTypeActive;
+	float FixedTimeStep;
+	bool SimulationNotActive;
+	bool Reset;
+	bool MassShrink;
 } ncEditorData_t;
 
 typedef enum

@@ -46,7 +46,7 @@ void InitEditor()
     UnloadImage(image);
     HideCursor();
 
-    ncEditorData.GravitationValue = 2;
+    ncEditorData.GravitationValue = 0;
     ncEditorData.MassMinValue = 2.0f;
     ncEditorData.BodyTypeEditMode = false;  
     ncEditorData.BodyTypeActive = 0; 
@@ -59,8 +59,9 @@ void InitEditor()
     ncEditorData.RestitutionValue = 0.3f;
     ncEditorData.BodyColor = WHITE;
     ncEditorData.ColorTypeActive = 0; // Initialize to Single Color
+    ncEditorData.FixedTimeStep = 0.01;
      
-    editorRect = (Rectangle){ anchor01.x - 120, anchor01.y, 456, 826 };
+    editorRect = (Rectangle){ anchor01.x - 120, anchor01.y, 456, 806 };
 }
 
 void UpdateEditor(Vector2 position)
@@ -83,29 +84,41 @@ void DrawEditor(Vector2 position)
 
     if (ncEditorData.EditorBoxActive)
     {
-        EditorActive = !GuiWindowBox((Rectangle) { anchor01.x - 120, anchor01.y, 456, 826 }, "Editor");
-        GuiSliderBar((Rectangle) { anchor01.x + 120, anchor01.y + 120, 120, 16 }, "Mass", TextFormat("%0.2f", ncEditorData.MassMinValue), & ncEditorData.MassMinValue, 0.1f, 10);
-        GuiSlider((Rectangle) { anchor01.x + 120, anchor01.y + 580, 120, 16 }, "Gravitation", TextFormat("%0.2f", ncEditorData.GravitationValue), & ncEditorData.GravitationValue, -20, 20);
+        EditorActive = !GuiWindowBox((Rectangle) { anchor01.x - 120, anchor01.y, 456, 806 }, "Editor");
+
         GuiGroupBox((Rectangle) { anchor01.x + 16.5f, anchor01.y + 40, 304, 424 }, "Bodies");
-        GuiGroupBox((Rectangle) { anchor01.x + 16.5f, anchor01.y + 500, 304, 242 }, "World");
-        GuiSlider((Rectangle) { anchor01.x + 120, anchor01.y + 540, 120, 16 }, "Gravity", TextFormat("%0.2f", ncEditorData.GravityValue), & ncEditorData.GravityValue, -10, 10);
+        GuiSliderBar((Rectangle) { anchor01.x + 120, anchor01.y + 120, 120, 16 }, "Mass", TextFormat("%0.2f", ncEditorData.MassMinValue), & ncEditorData.MassMinValue, 0.5f, 20);
+        if (GuiDropdownBox((Rectangle) { anchor01.x + 40, anchor01.y + 60, 120, 24 }, "BT_DYNAMIC;BT_KINEMATIC;BT_STATIC", & ncEditorData.BodyTypeActive, ncEditorData.BodyTypeEditMode)) ncEditorData.BodyTypeEditMode = !ncEditorData.BodyTypeEditMode;
+        if (GuiDropdownBox((Rectangle) { anchor01.x + 180, anchor01.y + 60, 120, 24 }, "FM_FORCE;FM_IMPULSE;FM_VELOCITY", & ncEditorData.ForceModeActive, ncEditorData.ForceModeEditMode)) ncEditorData.ForceModeEditMode = !ncEditorData.ForceModeEditMode;
         GuiSliderBar((Rectangle) { anchor01.x + 120, anchor01.y + 160, 120, 16 }, "Damping", TextFormat("%0.2f", ncEditorData.DampingValue), & ncEditorData.DampingValue, 0, 40);
         GuiSliderBar((Rectangle) { anchor01.x + 120, anchor01.y + 200, 120, 16 }, "Gravity Scale", TextFormat("%0.2f", ncEditorData.GravityScaleValue), & ncEditorData.GravityScaleValue, 0, 10);
         GuiSliderBar((Rectangle) { anchor01.x + 120, anchor01.y + 240, 120, 16 }, "Stiffness", TextFormat("%0.2f", ncEditorData.StiffnessValue), & ncEditorData.StiffnessValue, 0, 40);
         GuiSliderBar((Rectangle) { anchor01.x + 120, anchor01.y + 280, 120, 16 }, "Restitution", TextFormat("%0.2f", ncEditorData.RestitutionValue), & ncEditorData.RestitutionValue, 0, 2);
-        GuiColorPicker((Rectangle) { anchor01.x + 160, anchor01.y + 320, 120, 120 }, TextFormat("%0.2f", ncEditorData.RestitutionValue), & ncEditorData.BodyColor);
-        if (GuiDropdownBox((Rectangle) { anchor01.x + 30, anchor01.y + 360, 120, 24 }, "Single Color;Multi Color", & ncEditorData.ColorTypeActive, true)) 
+        GuiColorPicker((Rectangle) { anchor01.x + 160, anchor01.y + 320, 120, 120 }, TextFormat("%0.2f", ncEditorData.BodyColor), & ncEditorData.BodyColor);
+
+        if (GuiDropdownBox((Rectangle) { anchor01.x + 30, anchor01.y + 360, 120, 24 }, "Single Color;Multi Color", & ncEditorData.ColorTypeActive, true))
         {
-            if (ncEditorData.ColorTypeActive == 0) { 
-                
+            if (ncEditorData.ColorTypeActive == 0) {
+
             }
             else
             {
                 ncEditorData.BodyColor = GetRandomColor(); // Set random color for Multi Color
             }
         }
-        if (GuiDropdownBox((Rectangle) { anchor01.x + 40, anchor01.y + 60, 120, 24 }, "BT_DYNAMIC;BT_KINEMATIC;BT_STATIC", & ncEditorData.BodyTypeActive, ncEditorData.BodyTypeEditMode)) ncEditorData.BodyTypeEditMode = !ncEditorData.BodyTypeEditMode;
-        if (GuiDropdownBox((Rectangle) { anchor01.x + 180, anchor01.y + 60, 120, 24 }, "FM_FORCE;FM_IMPULSE;FM_VELOCITY", & ncEditorData.ForceModeActive, ncEditorData.ForceModeEditMode)) ncEditorData.ForceModeEditMode = !ncEditorData.ForceModeEditMode;
+        
+        GuiGroupBox((Rectangle) { anchor01.x + 16.5f, anchor01.y + 500, 304, 242 }, "World");
+        GuiSlider((Rectangle) { anchor01.x + 120, anchor01.y + 540, 120, 16 }, "Gravity", TextFormat("%0.2f", ncEditorData.GravityValue), & ncEditorData.GravityValue, -10, 10);
+        GuiSlider((Rectangle) { anchor01.x + 120, anchor01.y + 580, 120, 16 }, "Gravitation", TextFormat("%0.2f", ncEditorData.GravitationValue), & ncEditorData.GravitationValue, -20, 20);
+        GuiSlider((Rectangle) { anchor01.x + 120, anchor01.y + 620, 120, 16 }, "Time Step", TextFormat("%0.2f", ncEditorData.FixedTimeStep), & ncEditorData.FixedTimeStep, 0.01, 1);
+        
+        GuiToggle((Rectangle) { anchor01.x + 200, anchor01.y + 755, 120, 30 }, "Stop Simulation", & ncEditorData.SimulationNotActive);
+        GuiToggle((Rectangle) { anchor01.x - 110, anchor01.y + 455, 120, 30 }, "Shrink Mass", & ncEditorData.MassShrink);
+        if (GuiButton((Rectangle) { anchor01.x + 20, anchor01.y + 755, 120, 30 }, "Reset")) 
+        {
+            ncEditorData.Reset = true;
+        }
+
         //int i = GuiDropdownBox((Rectangle) { anchor01.x - 110, anchor01.y + 60, 120, 24 }, "AMBER;ASHES;BLUISH;CANDY;CHERRY;CYBER;DARK;LIGHT;JUNGLE;ENEFETE;LAVANDA;SUNNY;TERMINAL", & ncStyle, true);
         //printf("%d\n", i);
         if (GuiDropdownBox((Rectangle) { anchor01.x - 110, anchor01.y + 60, 120, 24 }, "AMBER;ASHES;BLUISH;CANDY;CHERRY;CYBER;DARK;LIGHT;JUNGLE;ENEFETE;LAVANDA;SUNNY;TERMINAL", & ncStyle, true)) 
